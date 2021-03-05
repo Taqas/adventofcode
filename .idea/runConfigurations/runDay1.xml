@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="runDay1" type="Application" factoryName="Application" folderName="year2020">
+    <option name="MAIN_CLASS_NAME" value="year2020.Day1" />
+    <module name="AdventOfCode" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
