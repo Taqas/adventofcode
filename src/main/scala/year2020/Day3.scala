@@ -28,7 +28,7 @@ object Day3 {
   def main(args:Array[String]): Unit = {
     val input: String = Source.fromResource("year2020/day3.txt").mkString.trim
 
-    val steps = Array(
+    val multiplySlopes = Array(
       (1,1),
       (3,1),
       (5,1),
@@ -39,7 +39,7 @@ object Day3 {
     val grid: Array[Array[Boolean]] = defineGrid(input)
     
     println(countTrees(grid, 3, 1))
-    println(prodCountTrees(grid, steps))
+    println(prodCountTrees(grid, multiplySlopes))
     
   }
 }
