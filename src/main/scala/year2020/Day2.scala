@@ -1,76 +1,70 @@
 package year2020
 
+import year2020.Day2.StoreTypes.StoreType
 import scala.io.Source
 
 object Day2 {
-  case class PasswordPolicy(
+
+  trait Policy
+
+  case class PolicySledRental(
       minOfRange: Int,
       maxOfRange: Int,
       char: Char
-  )
+  ) extends Policy
 
-  case class PasswordPolicyBogoddan(
+  case class PolicyBogoddan(
       firstPos: Int,
       secondPos: Int,
       char: Char
-  )
+  ) extends Policy
 
   type Password = String
 
-  object ValidPasswordsSledRental {
-    def numberInRange(min: Int, max: Int, number: Int): Boolean = {
-      min <= number && number <= max
-    }
+  sealed trait Part {
+    def isValid(policy: Policy, password: Password): Boolean
 
-    def countValid(passwords: List[(PasswordPolicy, Password)]): Int = {
-      passwords
-        .count {
-          case (policy: PasswordPolicy, pass: Password) =>
-            val l = pass.count(_ == policy.char)
-            numberInRange(policy.minOfRange, policy.maxOfRange, l)
-        }
-    }
+    def countValid(passwordPolicies: Seq[(Policy, Password)]): Int =
+      passwordPolicies.count((isValid _).tupled)
+  }
 
-    def parsePasswords(input: String): List[(PasswordPolicy, Password)] = {
-      input.linesIterator.map { line =>
-        val l = line.split(" ")
-        val range = l.head.split("-")
-        val min = range(0).toInt
-        val max = range(1).toInt
-        val char = l(1).dropRight(1).toList.head
-        val pass = l(2)
-        (PasswordPolicy(min, max, char), pass)
-      }.toList
+  object Part1 extends Part {
+    override def isValid(policy: Policy, password: Password): Boolean = {
+      val PolicySledRental(min, max, char) = policy
+      val count = password.count(_ == char)
+      min <= count && count <= max
     }
   }
 
-  object ValidPasswordsToboggan {
-    def countValid(passwords: List[(PasswordPolicyBogoddan, Password)]): Int = {
-      passwords
-        .count {
-          case (pol, pass) =>
-            (pass.charAt(pol.firstPos).toString + pass.charAt(pol.secondPos))
-              .count(_ == pol.char) == 1
-        }
-    }
-
-    def parsePasswords(input: String): List[(PasswordPolicyBogoddan, Password)] = {
-      input.linesIterator.map { line =>
-        val l = line.split(" ")
-        val positions = l.head.split("-")
-        val firstPos = positions(0).toInt - 1
-        val secondPos = positions(1).toInt - 1
-        val char = l(1).dropRight(1).toList.head
-        val pass = l(2)
-        (PasswordPolicyBogoddan(firstPos, secondPos, char), pass)
-      }.toList
+  object Part2 extends Part {
+    override def isValid(policy: Policy, password: Password): Boolean = {
+      val PolicyBogoddan(firstPos, secondPos, char) = policy
+      (password(firstPos - 1) == char) ^ (password(secondPos - 1) == char)
     }
   }
+
+  object StoreTypes extends Enumeration {
+    type StoreType = Value
+    val SledRental, Bogoddan = Value
+  }
+
+  private val passwordPolicyRegex = """(\d+)-(\d+) (\w): (\w+)""".r
+
+  def parsePasswordPolicy(s: String, storeType: StoreType): (Policy, Password) =
+    (s, storeType) match {
+      case (passwordPolicyRegex(min, max, char, password), StoreTypes.SledRental) =>
+        (PolicySledRental(min.toInt, max.toInt, char.head), password)
+      case (passwordPolicyRegex(firstPos, secondPos, char, password), StoreTypes.Bogoddan) =>
+        (PolicyBogoddan(firstPos.toInt, secondPos.toInt, char.head), password)
+    }
+
+  def parsePasswordPolicies(input: String, storeType: StoreType): Seq[(Policy, Password)] =
+    input.linesIterator.map(parsePasswordPolicy(_, storeType)).toSeq
+
+  lazy val input: String = Source.fromResource("year2020/day2.txt").mkString.trim
 
   def main(args: Array[String]): Unit = {
-    val input: String = Source.fromResource("year2020/day2.txt").mkString.trim
-
-    println(ValidPasswordsSledRental.countValid(ValidPasswordsSledRental.parsePasswords(input)))
-    println(ValidPasswordsToboggan.countValid(ValidPasswordsToboggan.parsePasswords(input)))
+    println(Part1.countValid(parsePasswordPolicies(input, StoreTypes.SledRental)))
+    println(Part2.countValid(parsePasswordPolicies(input, StoreTypes.Bogoddan)))
   }
 }
